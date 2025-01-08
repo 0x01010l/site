@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IG Story Viewer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #0d1118;
+            height: 100vh;
+            overflow: auto; /* Allow scrolling */
+        }
+        header {
+            width: 98%;
+            padding: 20px;
+            background-color: #262730;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            text-align: center;
+            position: fixed;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            font-size: 17px;
+            font-weight: bold;
+            color: white;
+        }
+        .logo img {
+            margin-right: 7px;
+            width: 20px;
+            height: 20px;
+            border-radius: 0%;
+            border:0;
+        }
+        .menu {
+            display: flex;
+            gap: 20px;
+        }
+        .menu a {
+            text-decoration: none;
+            color: white;
+            font-size: 16px;
+        }
+        .card-container {
+            background-color: #262730;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 80px; /* Adjust based on header height */
+            width: 80%;
+            max-width: 800px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            position: relative; /* Add relative positioning */
+        }
+        .profile-container {
+            display: flex;
+            align-items: center;
+            width: 90%;
+            justify-content: space-between;
+            padding: 0 20px;
+        }
+        .profile-info {
+            display: flex;
+            align-items: center;
+            display: none; /* Hide initially */
+        }
+        .profile-info img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-right: 20px;
+        }
+        .profile-stats {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .profile-stats div {
+            font-weight: bold;
+            color: white;
+            font-size: x-small;
+        }
+        .input-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+            width: 100%;
+        }
+        input, button {
+            padding: 14px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: 1px solid #e5e5e5;
+            outline: none;
+            width: 50%;
+        }
+        input {
+            background-color: #262730;
+            color: white;
+            border-color: #e5e5e5;
+        }
+        button {
+            background-color: #e5e5e5;
+            color: #262730;
+            cursor: pointer;
+        }
+        .story-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            width: 100%;
+            height: 60%;
+        }
+        .top-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            color: #e5e5e5;
+        }
+        .refresh-button {
+            display: none; /* Hidden by default */
+            margin-top: 0px;
+            padding: 14px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            background-color: black;
+            color: white;
+            cursor: pointer;
+        }
+        video, img {
+            border: 1px solid #ccc;
+            border-radius: 15px;
+            object-fit: cover;
+            display: block;
+            margin: auto;
+        }
+        .prev, .next {
+            position: absolute;
+            top: 50%; /* Adjust this value to move the buttons higher */
+            transform: translateY(-200%);
+            color: rgb(255, 255, 255);
+            font-size: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+            background-color: rgba(255, 255, 255, 0);
+            padding: 20px;
+            border-radius: 50%;
+        }
+        .prev {
+            left: -30px; /* Adjust based on card-container padding */
+        }
+        .next {
+            right: -30px; /* Adjust based on card-container padding */
+        }
+        .loader {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid black;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none; /* Hidden by default */
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Key Features Section */
+        .key-features {
+            display: flex;
+            flex-direction: row; /* Row layout for all devices */
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 40px;
+            width: 100%;
+            max-width: 800px;
+        }
+        .key-features h2 {
+            width: 100%;
+            color: white;
+            text-align: center;
+        }
+        .feature-card {
+            background-color: #262730;
+            border-radius: 15px;
+            padding: 20px;
+            width: calc(37% - 20px); /* Four cards per row with gap */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            color: white;
+            font-size: smaller;
+        }
+        .feature-card img {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 10px;
+        }
+        .feature-card h3 {
+            margin: 10px 0;
+        }
+        .feature-card p {
+            margin: 0;
+        }
+
+        /* New Grid Section */
+        .grid-section {
+            display: grid;
+            grid-template-columns: 1fr; /* Single column layout for mobile version */
+            grid-template-rows: auto;
+            gap: 20px;
+            margin-top: 40px;
+            width: 100%;
+            max-width: 800px;
+        }
+        .grid-section h2 {
+            grid-column: span 1;
+            color: white;
+            text-align: center;
+        }
+        .grid-card {
+            background-color: #262730;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            color: white;
+            font-size: smaller;
+        }
+        .grid-card img {
+            width: 100%;
+            height: 100%;
+            margin-bottom: 10px;
+        }
+        .grid-card h3 {
+            margin: 10px 0;
+        }
+        .grid-card p {
+            margin: 0;
+        }
+        .grid-card.large {
+            grid-column: span 1;
+            grid-row: span 1;
+        }
+
+        /* FAQ Section */
+        .faq-section {
+            width: 100%;
+            max-width: 800px;
+            margin-top: 40px;
+        }
+        .faq-section h2 {
+            color: white;
+            text-align: center;
+        }
+        .faq-card {
+            background-color: #262730;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            color: white;
+            cursor: pointer;
+        }
+        .faq-card h3 {
+            margin: 0;
+        }
+        .faq-card p {
+            margin: 10px 0 0;
+            display: none; /* Hide answers by default */
+        }
+
+        /* Footer Section */
+        footer {
+            width: 100%;
+            padding: 20px;
+            background-color: #262730;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            text-align: center;
+            color: white;
+        }
+        .footer-logo {
+            font-size: 10px;
+            font-weight: bold;
+        }
+        .footer-menu {
+            display: flex;
+            flex-direction: row;
+            gap: 10px;
+        }
+        .footer-menu a {
+            text-decoration: none;
+            color: white;
+            font-size: 10px;
+        }
+
+        /* Mobile-specific styles */
+        @media (max-width: 480px) {
+            .feature-card img {
+                width: 50px;
+                height: 50px;
+            }
+            .feature-card h3 {
+                font-size: 14px;
+            }
+            .feature-card p {
+                font-size: 12px;
+            }
+            .grid-card img {
+                width: 50px;
+                height: 50px;
+            }
+            .grid-card h3 {
+                font-size: 14px;
+            }
+            .grid-card p {
+                font-size: 12px;
+            }
+        }
+        .story-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            width: 100%;
+            height: 80%;
+        }
+        /* Desktop-specific styles */
+        @media (min-width: 481px) {
+            .key-features {
+                flex-direction: row; /* Row layout for desktop version */
+                flex-wrap: wrap;
+            }
+            .feature-card {
+                width: calc(25% - 20px); /* Four cards per row with gap */
+            }
+            .grid-section {
+                grid-template-columns: repeat(3, 1fr);
+                grid-template-rows: repeat(3, 1fr);
+            }
+            .grid-card.large {
+                grid-column: span 2;
+                grid-row: span 2;
+            }
+            footer {
+                flex-direction: row;
+                justify-content: space-between;
+            }
+            .footer-menu {
+                flex-direction: row;
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div>
+            <a href="index.html" class="logo">
+            <img src="logo.svg" alt="Logo">
+            IG Story Viewer Anon
+            </a>
+        </div>
+        <nav class="menu">
+            <a href="index.html">Home</a>
+            <a href="contact-us.html">Contact Us</a>
+            <a href="privacy-policy.html">Policies</a>
+        </nav>
+    </header>
+    <div class="card-container">
+        <div class="top-center">
+            <h1>IG Story Viewer</h1>
+        </div>
+        <div class="profile-container">
+            <div class="profile-info">
+                <img id="profilePic" src="" alt="Profile Picture">
+                <div class="profile-stats">
+                    <div id="followerCount">Followers: </div>
+                    <div id="followingCount">Following: </div>
+                    <div id="mediaCount">Posts: </div>
+                </div>
+            </div>
+        </div>
+        <button class="refresh-button" id="refreshButton">Search Again</button>
+        <div class="input-container">
+            <input type="text" id="username" placeholder="Enter IG username">
+            <button id="getProfileAndStoryButton">I SPY 👀</button>
+        </div>
+        <div class="story-container">
+            <span class="prev">&#10094;</span>
+            <div id="storyContent"></div>
+            <span class="next">&#10095;</span>
+        </div>
+        <div class="loader" id="loader"></div>
+    </div>
+
+    <!-- Key Features Section -->
+    <section class="key-features">
+        <h2>ANON IG VIEWER FEATURES</h2>
+        <div class="feature-card">
+            <img src="exp1.svg" alt="Feature 1">
+            <h3>Browse Anonymously</h3>
+            <p>View instagram stories without anyone knowing.</p>
+        </div>
+        <div class="feature-card">
+            <img src="exp2.svg" alt="Feature 2">
+            <h3>Fast and Reliable</h3>
+            <p>Instant access without delays of complications.</p>
+        </div>
+        <div class="feature-card">
+            <img src="exp3.svg" alt="Feature 3">
+            <h3>Save favorite Moments</h3>
+            <p>Download instagram stories quickly.</p>
+        </div>
+        <div class="feature-card">
+            <img src="exp4.svg" alt="Feature 4">
+            <h3>Privacy guaranteed</h3>
+            <p>We never log or share your data.</p>
+        </div>
+    </section>
+<br>
+    <!-- New Grid Section -->  
+     <div class="top-center">
+        <h2>Why we Stands Out</h2>
+        </div>
+    
+    <section class="grid-section">
+     
+        <div class="grid-card large">
+            <img src="a1.jpg" alt="Grid Feature 1">
+            <h3>No Account Needed</h3>
+            <p>Skip the hassle of signing up or logging in.</p>
+        </div>
+        <div class="grid-card">
+            <img src="a3.jpg" alt="Grid Feature 2">
+            <h3>Unlimited Free Access</h3>
+            <p>Enjoy unrestricted access to Instagram profiles, stories, and reels at no cost.</p>
+        </div>
+        <div class="grid-card">
+            <img src="a14.jpg" alt="Grid Feature 3">
+            <h3>Download Instagram Content.</h3>
+            <p>Save Instagram stories, reels, and posts directly to your device without compromising your anonymity.</p>
+        </div>
+        <div class="grid-card">
+            <img src="aa14.jpg" alt="Grid Feature 5">
+            <h3>High Quality</h3>
+            <p>View everything in HD.</p>
+        </div>
+        <div class="grid-card large">
+            <img src="a2.jpg" alt="Grid Feature 4">
+            <h3>User-Friendly Design</h3>
+            <p>User-Friendly Design
+                Our clean and intuitive interface makes finding what you're looking for easy. Whether tech-savvy or a beginner, you'll feel right at home.</p>
+        </div>
+       
+        <div class="grid-card">
+            <img src="a1144.png" alt="Grid Feature 6">
+            <h3>Safe and Secure.</h3>
+            <p>We prioritize your PrivacyPrivacy by using advanced encryption to keep your data safe.</p>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq-section">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-card">
+            <h3>What is IG Story Viewer?</h3>
+            <p>IG Story Viewer is a tool that allows you to view Instagram stories anonymously.</p>
+        </div>
+        <div class="faq-card">
+            <h3>How do I use IG Story Viewer?</h3>
+            <p>Simply enter the Instagram username and click "Get Profile and Stories" to view the stories.</p>
+        </div>
+        <div class="faq-card">
+            <h3>Is IG Story Viewer free?</h3>
+            <p>Yes, IG Story Viewer is completely free to use.</p>
+        </div>
+        <div class="faq-card">
+            <h3>Can I download stories using IG Story Viewer?</h3>
+            <p>Yes, IG Story Viewer is supporting downloading stories.</p>
+        </div>
+    </section>
+<br>
+<br>
+    <!-- Footer Section -->
+    <footer>
+        <div class="footer-logo">IG Story Viewer Anon</div>
+        <div class="footer-menu">
+            <a href="term-of-use.html">Terms of Use</a>
+            <a href="privacy-policy.html">Privacy Policy</a>
+        </div>
+        <div>2025 All rights reserved. we are not affiliated with Instagram™. We do not host any Instagram content</div>
+    </footer>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const faqCards = document.querySelectorAll('.faq-card');
+            faqCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    const answer = this.querySelector('p');
+                    if (answer.style.display === 'block') {
+                        answer.style.display = 'none';
+                    } else {
+                        answer.style.display = 'block';
+                    }
+                });
+            });
+        });
+    </script>
+    <script src="script.js"></script>
+
+</body>
+</html>
